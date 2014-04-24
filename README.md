@@ -76,8 +76,8 @@ Now from your controller just access your email like below:
 public function index()
 {
   $this->loadModel('CustomEmail');
-  $ticketEmails = $this->CustomEmail->find('first');
-  var_dump($ticketEmails); die();
+  $emails = $this->CustomEmail->find('first');
+  var_dump($emails); die();
 }
 ```
 
