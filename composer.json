@@ -28,6 +28,9 @@
         "source": "https://github.com/shahariaazam/cakephp-datasource-imap"
     },
     "extra": {
-        "installer-name": "ImapSource"
+        "installer-name": "ImapSource",
+        "branch-alias": {
+            "dev-master": "master"
+        },
     }
 }
