@@ -1,0 +1,32 @@
+{
+    "name": "shahariaazam/cakephp-datasource-imap",
+    "description": "Imap datasource plugin for CakePHP",
+    "type": "cakephp-plugin",
+    "keywords": [
+        "cakephp",
+        "imap",
+        "datasource",
+        "plugin"
+    ],
+    "homepage": "https://github.com/shahariaazam/cakephp-datasource-imap",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Shaharia Azam",
+            "email": "shaharia.azam@gmail.com",
+            "homepage": "http://github.com/shahariaazam",
+            "role": "Maintainer"
+        }
+    ],
+    "require": {
+        "composer/installers": "*"
+    },
+    "support": {
+        "email": "shaharia.azam@gmail.com",
+        "issues": "https://github.com/shahariaazam/cakephp-datasource-imap/issues",
+        "source": "https://github.com/shahariaazam/cakephp-datasource-imap"
+    },
+    "extra": {
+        "installer-name": "ImapSource"
+    }
+}
