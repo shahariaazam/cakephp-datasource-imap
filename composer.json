@@ -1,6 +1,7 @@
 {
     "name": "shahariaazam/cakephp-datasource-imap",
     "description": "Imap datasource plugin for CakePHP",
+    "version": "2.0",
     "type": "cakephp-plugin",
     "keywords": [
         "cakephp",
