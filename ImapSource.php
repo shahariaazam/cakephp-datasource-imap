@@ -1,33 +1,26 @@
 <?php
+
 /**
- * Get emails in your app with cake like finds.
+ * Get email through IMAP protocol in your CakePHP application with
+ * your familiar find, create, update, delete method. So you can
+ * accomplish your mailing task very easily.
  *
- * Copyright (c) 2010 Carl Sutton ( dogmatic69 )
- * Copyright (c) 2011 Kevin van Zonneveld ( kvz )
+ * You can also work with it for your specific mailbox.
  *
- * @filesource
- * @copyright Copyright (c) 2010 Carl Sutton ( dogmatic69 )
- * @copyright Copyright (c) 2011 Kevin van Zonneveld ( kvz )
- * @link http://www.infinitas-cms.org
- * @link https://github.com/kvz/cakephp-emails-plugin
- * @package libs
- * @subpackage libs.models.datasources.reader
+ * @link https://github.com/shahariaazam/cakephp-datasource-imap
  * @license http://www.opensource.org/licenses/mit-license.php The MIT License
- * @since 0.9a
- *
- * @author dogmatic69
- * @author kvz
+ * @author Shaharia Azam
+ * @email shaharia.azam@gmail.com
  *
  * Modified and made usable for CakePHP (2.x) by Shaharia Azam <shaharia.azam@gmail.com>
  * @URI http://github.com/shahariaazam
- *
- * Licensed under The MIT License
- * Redistributions of files must retain the above copyright notice.
+ * Code refactored and inspired from https://github.com/kvz/cakephp-emails-plugin
  */
-class ImapSource extends DataSource {
-    protected $_isConnected     = false;
+class ImapSource extends DataSource
+{
+    protected $_isConnected = false;
     protected $_connectionString = null;
-    protected $_connectionType   = '';
+    protected $_connectionType = '';
 
     protected $_defaultConfigs = array(
         'global' => array(
@@ -140,7 +133,8 @@ class ImapSource extends DataSource {
      *
      * @param mixed $config
      */
-    public function __construct ($config) {
+    public function __construct($config)
+    {
         parent::__construct($config);
 
         if (!isset($config['type'])) {
@@ -157,7 +151,8 @@ class ImapSource extends DataSource {
     /**
      * Expunge messages marked for deletion
      */
-    public function __destruct () {
+    public function __destruct()
+    {
         if ($this->_isConnected && $this->Stream) {
             $this->_isConnected = false;
             // If set to CL_EXPUNGE, the function will silently expunge the
@@ -173,7 +168,8 @@ class ImapSource extends DataSource {
      * @param mixed $Model
      * @return array the shcema of the model
      */
-    public function describe ($Model) {
+    public function describe($Model)
+    {
         return $this->_schema;
     }
 
@@ -184,7 +180,8 @@ class ImapSource extends DataSource {
      *
      * @return array sources
      */
-    public function listSources ($data = null) {
+    public function listSources($data = null)
+    {
         return array('listSources');
     }
 
@@ -192,12 +189,13 @@ class ImapSource extends DataSource {
      * Returns a query condition, or null if it wasn't found
      *
      * @param object $Model
-     * @param array  $query
+     * @param array $query
      * @param string $field
      *
      * @return mixed or null
      */
-    protected function _cond ($Model, $query, $field) {
+    protected function _cond($Model, $query, $field)
+    {
         $keys = array(
             '`' . $Model->alias . '`.`' . $field . '`',
             $Model->alias . '.' . $field,
@@ -220,7 +218,8 @@ class ImapSource extends DataSource {
      *
      * @return false or array
      */
-    protected function _uidsByCriteria ($searchCriteria) {
+    protected function _uidsByCriteria($searchCriteria)
+    {
         if (is_numeric($searchCriteria) || Set::numeric($searchCriteria)) {
             // We already know the id, or list of ids
             $results = $searchCriteria;
@@ -272,11 +271,12 @@ class ImapSource extends DataSource {
      *  UNKEYWORD "string" - match messages that do not have the keyword "string"
      *
      * @param object $Model
-     * @param array  $query
+     * @param array $query
      *
      * @return array
      */
-    protected function _makeSearch ($Model, $query) {
+    protected function _makeSearch($Model, $query)
+    {
         $searchCriteria = array();
 
         if (!@$query['conditions']) {
@@ -302,7 +302,7 @@ class ImapSource extends DataSource {
 
         foreach ($flags as $flag) {
             if (null !== ($val = $this->_cond($Model, $query, $flag))) {
-                $upper   = strtoupper($flag);
+                $upper = strtoupper($flag);
                 $unupper = 'UN' . $upper;
 
                 if (!$val && ($flag === 'recent')) {
@@ -337,11 +337,12 @@ class ImapSource extends DataSource {
      *  SORTSIZE - size of message in octets
      *
      * @param object $Model
-     * @param array  $query
+     * @param array $query
      *
      * @return array
      */
-    protected function _makeOrder($Model, $query) {
+    protected function _makeOrder($Model, $query)
+    {
         $criterias = array('date', 'arrival', 'from', 'subject', 'to', 'cc', 'size');
 
         $order = array(1, SORTDATE);
@@ -360,10 +361,11 @@ class ImapSource extends DataSource {
         return $order;
     }
 
-    public function delete (Model $Model, $conditions = NULL) {
-        $query          = compact('conditions');
+    public function delete(Model $Model, $conditions = NULL)
+    {
+        $query = compact('conditions');
         $searchCriteria = $this->_makeSearch($Model, $query);
-        $uids           = $this->_uidsByCriteria($searchCriteria);
+        $uids = $this->_uidsByCriteria($searchCriteria);
         if ($uids === false) {
             $uids = $Model->find('list', $query);
         }
@@ -395,13 +397,14 @@ class ImapSource extends DataSource {
      *
      * @return the data requested by the model
      */
-    public function read(Model $Model, $query = array(), $recursive = NULL) {
+    public function read(Model $Model, $query = array(), $recursive = NULL)
+    {
         if (!$this->connect($Model, $query)) {
             return $this->err($Model, 'Cannot connect to server');
         }
 
         $searchCriteria = $this->_makeSearch($Model, $query);
-        $uids           = $this->_uidsByCriteria($searchCriteria);
+        $uids = $this->_uidsByCriteria($searchCriteria);
         if ($uids === false) {
             // Perform Search & Order. Returns list of ids
             list($orderReverse, $orderCriteria) = $this->_makeOrder($Model, $query);
@@ -465,8 +468,9 @@ class ImapSource extends DataSource {
      * @param <type> $params
      * @return <type>
      */
-    public function calculate ($Model, $func, $params = array()) {
-        $params = (array) $params;
+    public function calculate($Model, $func, $params = array())
+    {
+        $params = (array)$params;
         switch (strtolower($func)) {
             case 'count':
                 return 'count';
@@ -477,31 +481,44 @@ class ImapSource extends DataSource {
     /**
      * connect to the mail server
      */
-    public function connect ($Model, $query) {
+    public function connect($Model, $query)
+    {
         if ($this->_isConnected) {
             return true;
         }
 
         $this->_connectionType = $this->config['type'];
 
+        /**
+         * checking whether mailbox key found in conditions or not.
+         * If found, add the mailbox in the $this->_connectionString
+         */
+        if (isset($query['conditions']['mailbox'])) {
+            $mailbox = $query['conditions']['mailbox'];
+        } else {
+            $mailbox = null;
+        }
+
         switch ($this->config['type']) {
             case 'imap':
                 $this->_connectionString = sprintf(
-                    '{%s:%s%s%s}',
+                    '{%s:%s%s%s}%s',
                     $this->config['server'],
                     $this->config['port'],
                     @$this->config['ssl'] ? '/ssl' : '',
-                    @$this->config['connect'] ? '/' . @$this->config['connect'] : ''
+                    @$this->config['connect'] ? '/' . @$this->config['connect'] : '',
+                    $mailbox
                 );
                 break;
 
             case 'pop3':
                 $this->_connectionString = sprintf(
-                    '{%s:%s/pop3%s%s}',
+                    '{%s:%s/pop3%s%s}%s',
                     $this->config['server'],
                     $this->config['port'],
                     @$this->config['ssl'] ? '/ssl' : '',
-                    @$this->config['connect'] ? '/' . @$this->config['connect'] : ''
+                    @$this->config['connect'] ? '/' . @$this->config['connect'] : '',
+                    $mailbox
                 );
                 break;
         }
@@ -534,45 +551,48 @@ class ImapSource extends DataSource {
         return $this->_isConnected = true;
     }
 
-    public function name ($data) {
+    public function name($data)
+    {
         return $data;
     }
 
-    public function sensible ($arguments) {
+    public function sensible($arguments)
+    {
         if (is_object($arguments)) {
             return get_class($arguments);
         }
         if (!is_array($arguments)) {
             if (!is_numeric($arguments) && !is_bool($arguments)) {
-                $arguments = "'".$arguments."'";
+                $arguments = "'" . $arguments . "'";
             }
             return $arguments;
         }
         $arr = array();
-        foreach($arguments as $key=>$val) {
+        foreach ($arguments as $key => $val) {
             if (is_array($val)) {
                 $val = json_encode($val);
             } elseif (!is_numeric($val) && !is_bool($val)) {
-                $val = "'".$val."'";
+                $val = "'" . $val . "'";
             }
 
             if (strlen($val) > 33) {
                 $val = substr($val, 0, 30) . '...';
             }
 
-            $arr[] = $key.': '.$val;
+            $arr[] = $key . ': ' . $val;
         }
         return join(', ', $arr);
     }
 
-    public function err ($Model, $format, $arg1 = null, $arg2 = null, $arg3 = null) {
+    public function err($Model, $format, $arg1 = null, $arg2 = null, $arg3 = null)
+    {
         $arguments = func_get_args();
-        $Model     = array_shift($arguments);
-        $format    = array_shift($arguments);
+        $Model = array_shift($arguments);
+        $format = array_shift($arguments);
 
         $str = $format;
         if (count($arguments)) {
-            foreach($arguments as $k => $v) {
+            foreach ($arguments as $k => $v) {
                 $arguments[$k] = $this->sensible($v);
             }
             $str = vsprintf($str, $arguments);
@@ -588,7 +608,8 @@ class ImapSource extends DataSource {
         return false;
     }
 
-    public function lastError () {
+    public function lastError()
+    {
         if (($lastError = $this->error)) {
             return $lastError;
         }
@@ -603,7 +624,8 @@ class ImapSource extends DataSource {
      * Update the email setting flags
      *
      */
-    public function update(Model $model, $fields = NULL, $values = NULL, $conditions = NULL) {
+    public function update(Model $model, $fields = NULL, $values = NULL, $conditions = NULL)
+    {
         if (empty($model->id)) {
             return $this->err($model, 'Cannot update a record without id');
         }
@@ -641,7 +663,8 @@ class ImapSource extends DataSource {
      *
      * @return mixed string or array
      */
-    protected function _personId ($Mail, $type = 'to', $need = null) {
+    protected function _personId($Mail, $type = 'to', $need = null)
+    {
         if ($type === 'sender' && !isset($Mail->sender)) {
             $type = 'from';
         }
@@ -690,7 +713,8 @@ class ImapSource extends DataSource {
      *
      * @param string $text
      */
-    protected function _decode($text) {
+    protected function _decode($text)
+    {
         if (is_object($text)) {
             $decoded = $text;
             $text = $decoded->text;
@@ -704,10 +728,10 @@ class ImapSource extends DataSource {
         }
         $text = imap_qprint($decoded->text);
 
-        $app_encoding  = Configure::read('App.encoding');
+        $app_encoding = Configure::read('App.encoding');
         $mail_encoding = $decoded->charset;
-        $encodings     = mb_list_encodings();
-        $valid         = true;
+        $encodings = mb_list_encodings();
+        $valid = true;
         if ($app_encoding !== $mail_encoding || !($valid = mb_check_encoding($text, $mail_encoding))) {
             if (!in_array($mail_encoding, $encodings) || !$valid) {
                 $mail_encoding = mb_detect_encoding($text);
@@ -728,7 +752,8 @@ class ImapSource extends DataSource {
      * @param int $uid the number of the message
      * @return array empty on error/nothing or array of formatted details
      */
-    protected function _getFormattedMail ($Model, $uid, $fetchAttachments = false) {
+    protected function _getFormattedMail($Model, $uid, $fetchAttachments = false)
+    {
         // Translate uid to msg_no. Has no decent fail
         $msg_number = imap_msgno($this->Stream, $uid);
 
@@ -816,7 +841,26 @@ class ImapSource extends DataSource {
         return $return;
     }
 
-    protected function _awesomePart($Part, $uid) {
+    /**
+     * To get all the mailboxes
+     *
+     * @param $stream
+     * @param $server
+     * @return array|Exception
+     */
+    protected function _getMailboxes($stream, $server)
+    {
+        try {
+            $mailboxes = @imap_list($stream, "{" . $server . "}", "*");
+        } catch (\Exception $e) {
+            return $error = array('Error: '.$e);
+        }
+
+        return $mailboxes;
+    }
+
+    protected function _awesomePart($Part, $uid)
+    {
         if (!($Part->format = @$this->encodingTypes[$Part->encoding])) {
             $Part->format = $this->encodingTypes[0];
         }
@@ -827,8 +871,8 @@ class ImapSource extends DataSource {
 
         $Part->mimeType = strtolower($Part->datatype . '/' . $Part->subtype);
         $Part->filename = '';
-        $Part->name     = '';
-        $Part->uid      = $uid;
+        $Part->name = '';
+        $Part->uid = $uid;
 
         if ($Part->ifdparameters) {
             foreach ($Part->dparameters as $Object) {
@@ -864,10 +908,11 @@ class ImapSource extends DataSource {
      *
      * @return <type>
      */
-    protected function _flatStructure ($Model, $uid, $Structure = false, $partnr = 1) {
+    protected function _flatStructure($Model, $uid, $Structure = false, $partnr = 1)
+    {
         $mainRun = false;
         if (!$Structure) {
-            $mainRun  = true;
+            $mainRun = true;
             $Structure = imap_fetchstructure($this->Stream, $uid, FT_UID);
             if (!property_exists($Structure, 'type')) {
                 return $this->err($Model, 'No type in structure');
@@ -877,7 +922,7 @@ class ImapSource extends DataSource {
 
         if (!empty($Structure->parts)) {
             $decimas = explode('.', $partnr);
-            $decimas[count($decimas)-1] -= 1;
+            $decimas[count($decimas) - 1] -= 1;
             $Structure->path = join('.', $decimas);
         } else {
             $Structure->path = $partnr;
@@ -886,7 +931,7 @@ class ImapSource extends DataSource {
 
         if (!empty($Structure->parts)) {
             foreach ($Structure->parts as $n => $Part) {
-                if ($n >= 1){
+                if ($n >= 1) {
                     $arr_decimas = explode('.', $partnr);
                     $arr_decimas[count($arr_decimas) - 1] += 1;
                     $partnr = join('.', $arr_decimas);
@@ -896,16 +941,16 @@ class ImapSource extends DataSource {
                 $flatParts[$Part->path] = $this->_awesomePart($Part, $uid);
 
                 if (!empty($Part->parts)) {
-                    if ($Part->type == 1){
+                    if ($Part->type == 1) {
                         $flatParts = Set::merge(
                             $flatParts,
-                            $this->_flatStructure($Model, $uid, $Part, $partnr.'.'.($n+1))
+                            $this->_flatStructure($Model, $uid, $Part, $partnr . '.' . ($n + 1))
                         );
                     } else {
-                        foreach ($Part->parts as $idx => $Part2){
+                        foreach ($Part->parts as $idx => $Part2) {
                             $flatParts = Set::merge(
                                 $flatParts,
-                                $this->_flatStructure($Model, $uid, $Part2, $partnr.'.'.($idx+1))
+                                $this->_flatStructure($Model, $uid, $Part2, $partnr . '.' . ($idx + 1))
                             );
                         }
                     }
@@ -941,7 +986,8 @@ class ImapSource extends DataSource {
         return $flatParts;
     }
 
-    protected function _fetchAttachments ($flatStructure, $Model) {
+    protected function _fetchAttachments($flatStructure, $Model)
+    {
         $attachments = array();
         foreach ($flatStructure as $path => $Part) {
             if (!$Part->is_attachment) {
@@ -965,7 +1011,8 @@ class ImapSource extends DataSource {
         return $attachments;
     }
 
-    protected function _fetchPart ($Part) {
+    protected function _fetchPart($Part)
+    {
         $data = imap_fetchbody($this->Stream, $Part->uid, $Part->path, FT_UID | FT_PEEK);
         if ($Part->format === 'quoted-printable' && $data) {
             $data = quoted_printable_decode($data);
@@ -973,7 +1020,8 @@ class ImapSource extends DataSource {
         return $data;
     }
 
-    protected function _fetchFirstByMime ($flatStructure, $mime_type) {
+    protected function _fetchFirstByMime($flatStructure, $mime_type)
+    {
         foreach ($flatStructure as $path => $Part) {
             if ($mime_type === $Part->mimeType) {
                 $text = $this->_fetchPart($Part);
@@ -991,7 +1039,7 @@ class ImapSource extends DataSource {
                     if ($param->attribute !== 'charset') {
                         continue;
                     }
-                    $params = (object) array(
+                    $params = (object)array(
                         'charset' => $param->value,
                         'text' => $text,
                     );
@@ -1009,7 +1057,8 @@ class ImapSource extends DataSource {
      *
      * @param <type> $id
      */
-    protected function _toUid ($id) {
+    protected function _toUid($id)
+    {
         if (is_array($id)) {
             return array_map(array($this, __FUNCTION__), $id);
         };
@@ -1025,7 +1074,8 @@ class ImapSource extends DataSource {
      *
      * @return mixed on imap its the unique id (int) and for others its a base64_encoded string
      */
-    protected function _toId ($uid) {
+    protected function _toId($uid)
+    {
         if (is_array($uid)) {
             return array_map(array($this, __FUNCTION__), $uid);
         };
@@ -1040,7 +1090,8 @@ class ImapSource extends DataSource {
      * @param object $Mail the imap header of the mail
      * @return int the number of mails in the thred
      */
-    protected function _getThreadCount ($Mail) {
+    protected function _getThreadCount($Mail)
+    {
         if (isset($Mail->reference) || isset($Mail->in_reply_to)) {
             return '?';
         }
