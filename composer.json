@@ -31,6 +31,6 @@
         "installer-name": "ImapSource",
         "branch-alias": {
             "dev-master": "master"
-        },
+        }
     }
 }
